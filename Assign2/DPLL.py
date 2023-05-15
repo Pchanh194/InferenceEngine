@@ -6,12 +6,12 @@ class DPLL(Engine):
         super().__init__()
 
     def solve(self):
-        exp = LogicalExpression("(a&b)<=>c")
+        exp = LogicalExpression("(a <=> (c => ~d)) & b & (b => a); c; ~f || g")
         exp = self.convert_to_cnf(exp)
         exp.print_info()
 
     def convert_to_cnf(self, expression):
-        print("Type of Expression:", type(expression))
+        # print("Type of Expression:", type(expression))
         if expression.symbol is not None:
             return expression
         elif expression.connective == "<=>":
