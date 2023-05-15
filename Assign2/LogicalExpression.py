@@ -10,9 +10,9 @@ class LogicalExpression:
             sentence = sentence.strip()
             if any(op in sentence for op in ["<=>", "=>", "&", "~", "\\/", "||"]):
                 self.sentence_parser(sentence)
-                print(f"new sentence: {sentence}")
+                print(f"New sentence: {sentence}")
             else:
-                print(f"symbol sentence: {sentence}")
+                print(f"Symbol sentence: {sentence}")
                 self._symbol = sentence
 
     @property

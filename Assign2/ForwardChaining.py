@@ -20,10 +20,10 @@ class ForwardChaining:
         agenda = deque()
         # print("Clauses: ", self._knowledge_base.clauses)
         for c in self._knowledge_base.clauses:
-            print(f"Premise: {c.premise}, Conclusion: {c.conclusion}")
+            # print(f"Premise: {c.premise}, Conclusion: {c.conclusion}")
             if c.conclusion is None:
                 agenda.append(c.premise)
-        print(len(agenda))
+        # print(len(agenda))
         return agenda
 
     def init_count(self):

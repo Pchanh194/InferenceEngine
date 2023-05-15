@@ -3,10 +3,9 @@ from LogicalExpression import LogicalExpression
 from AdvancedKnowledgeBase import AdvancedKnowledgeBase
 from KnowledgeBase import KnowledgeBase
 from Clause import Clause
-from TruthTable import TruthTable
 from BackwardChaining import BackwardChaining
 from ForwardChaining import ForwardChaining
-from ExtendedTruthTable import ExtendedTruthTable
+from TruthTable import TruthTable
 from DPLL import DPLL
 
 _kb = None
@@ -22,13 +21,11 @@ def main():
     if read_problem(args[1], args[0]):
         # Determines which algorithm to use for solving problem
         if args[0] == "TT":
-            _engine = TruthTable(_kb, _query)
+            _engine = TruthTable(_akb, _query)
         elif args[0] == "BC":
             _engine = BackwardChaining(_kb, _query)
         elif args[0] == "FC":
             _engine = ForwardChaining(_kb, _query)
-        elif args[0] == "GTT":
-            _engine = ExtendedTruthTable(_akb, _query)
         elif args[0] == "DPLL":
             _engine = DPLL()
         else:
@@ -59,7 +56,7 @@ def read_problem(filename, solver):
     clauses = []
 
     # If basic checking method
-    if solver != "GTT" and solver != "DPLL":
+    if solver != "TT" and solver != "DPLL":
         for s in knowledge:
             if "=>" in s:
                 premise_symbols = []

@@ -11,6 +11,7 @@ class DPLL(Engine):
         exp.print_info()
 
     def convert_to_cnf(self, expression):
+        print("Type of Expression:", type(expression))
         if expression.symbol is not None:
             return expression
         elif expression.connective == "<=>":

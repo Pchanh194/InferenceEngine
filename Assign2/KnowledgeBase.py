@@ -10,6 +10,7 @@ class KnowledgeBase:
         symbol_list = []
         for c in self._clauses:
             # if there is a premise in clause
+            # print(f"KnowledgeBase: \n Premise: {c.premise}, Conclusion: {c.conclusion}")
             if c.conclusion is not None:
                 for s in c.conclusion:
                     # checks if symbol list already has the symbol

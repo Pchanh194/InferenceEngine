@@ -1,87 +1,89 @@
-from Engine import Engine
+from LogicalExpression import LogicalExpression
 
-class TruthTable(Engine):
+class TruthTable:
     def __init__(self, kb, query):
-        self._model_count = 0
-        self._knowledge_base = kb
+        self._kb = kb
         self._query = query
-
-    def create_symbol_list(self, kb, alpha):
-        symbol_list = [alpha]
-        for c in kb.clauses:
-            if c.premise is not None:
-                for s in c.premise:
-                    if s not in symbol_list:
-                        symbol_list.append(s)
-            if c.conclusion is not None:  # check if conclusion is not None
-                if isinstance(c.conclusion, list):  # check if conclusion is a list
-                    for s in c.conclusion:  # iterate over symbols in the list
-                        if s not in symbol_list:
-                            symbol_list.append(s)
-                elif c.conclusion not in symbol_list:
-                    symbol_list.append(c.conclusion)
-        return symbol_list
-
-
-    def extend(self, key, value, model):
-        new_model = model.copy()
-        new_model[key] = value
-        return new_model
+        self._model_count = 0
 
     def solve(self):
-        is_true = self.TT_entails(self._knowledge_base, self._query)
-        print(f"Is True: {is_true} model count: {self._model_count}")
+        symbols = self.create_symbol_list(self._kb.expressions, self._query)
+        result = self.TT_ENTAILS(self._kb, self._query)
+        print("\nYes," if result == True else "No","Model count: ", self._model_count)
 
-    def TT_entails(self, kb, alpha):
-        symbols = self.create_symbol_list(kb, alpha)
+    def create_symbol_list(self, kb, query):
+        symbol_list = []
+        running_list = []
+        if query:
+            symbol_list.append(query)
+        for exp in kb:
+            if exp.symbol is not None:
+                if exp.symbol not in symbol_list:
+                    symbol_list.append(exp.symbol)
+            else:
+                running_list = self.create_symbol_list(exp.children, None)
+                for s in running_list:
+                    if s not in symbol_list:
+                        symbol_list.append(s)
+        # print("Symbol list: ", ' '.join(symbol_list))
+        return symbol_list
+
+    def extend(self, key, val, model):
+        new_model = dict(model)
+        if key is not None:
+            new_model[key] = val
+        return new_model
+
+    def TT_ENTAILS(self, kb, query):
+        symbols = self.create_symbol_list(kb.expressions, query)
         model = {}
-        return self.TT_check_all(kb, alpha, symbols, model)
+        return self.TT_CHECK_ALL(kb, query, symbols, model)
 
-    def TT_check_all(self, kb, alpha, symbols, model):
-        # print(';'.join(symbols))
+    def TT_CHECK_ALL(self, kb, query, symbols, model):
         if len(symbols) == 0:
-            # for key, value in model.items():
-            #     print(f"{key}: {value}")
-            
-            # print(self.PL_true_from_kb(kb, model), self.PL_true(alpha, model))
-
-            if self.PL_true_from_kb(kb, model): 
-                if self.PL_true(alpha, model):
+            if self.IS_TRUE(kb.expressions, model):
+                if self.IS_TRUE(query, model):
                     self._model_count += 1
-                    print(self.PL_true_from_kb(kb, model), self.PL_true(alpha, model), "Count: ", self._model_count)
                     return True
                 else:
                     return False
             else:
                 return True
         else:
-            # for key, value in model.items():
-            #     print(f"{key}: {value}")
-            P = symbols.pop(0)
-            return self.TT_check_all(kb, alpha, symbols[:], self.extend(P, True, model)) and \
-                   self.TT_check_all(kb, alpha, symbols[:], self.extend(P, False, model))
+            P = symbols[0]
+            symbols = symbols[1:]
+            return (self.TT_CHECK_ALL(kb, query, list(symbols), self.extend(P, True, model)) 
+                    and self.TT_CHECK_ALL(kb, query, list(symbols), self.extend(P, False, model)))
 
-    def PL_true(self, query, model):
-        if isinstance(query, list):
-            return all(self.PL_true(q, model) for q in query)
-        else:
+    def IS_TRUE(self, query, model):
+        if isinstance(query, str):
             return model.get(query, False)
-
-    def PL_true_from_kb(self, kb, model):
-        final_result = True
-        for c in kb.clauses:
-            clause_result = True
-            if c.premise is None:
-                clause_result = self.PL_true(c.conclusion, model)
+        elif isinstance(query, LogicalExpression):
+            result = True
+            if query.symbol is not None:
+                result = self.IS_TRUE(query.symbol, model)
             else:
-                premise_is_true = all(self.PL_true(symbol, model) for symbol in c.premise)
-                conclusion = c.conclusion
-                if isinstance(conclusion, list) and len(conclusion) == 1:
-                    conclusion = conclusion[0]
-                clause_result = not (premise_is_true and not self.PL_true(conclusion, model))
-            final_result &= clause_result
+                if query.connective == "&":
+                    for child in query.children:
+                        result = result and self.IS_TRUE(child, model)
+                if query.connective == "\\/":
+                    result = False
+                    for child in query.children:
+                        result = result or self.IS_TRUE(child, model)
+                if query.connective == "=>":
+                    result = not self.IS_TRUE(query.children[0], model) or self.IS_TRUE(query.children[1], model)
+                if query.connective == "<=>":
+                    result = self.IS_TRUE(query.children[0], model) == self.IS_TRUE(query.children[1], model)
+                if query.connective == "~":
+                    return not self.IS_TRUE(query.children[0], model)
+                if query.connective == "||":
+                    result = False
+                    for child in query.children:
+                        result = result or self.IS_TRUE(child, model)
 
-        # print(f"model: {final_result}")
-        return final_result
-
-
+            return result
+        elif isinstance(query, list):  # It is a knowledge base
+            final_result = True
+            for exp in query:
+                final_result = final_result and self.IS_TRUE(exp, model)
+            return final_result
